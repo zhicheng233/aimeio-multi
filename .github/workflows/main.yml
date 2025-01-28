@@ -23,12 +23,20 @@ jobs:
 
     - name: Set up MinGW
       run: |
-        sudo apt install -y mingw-w64
+        sudo apt install -y mingw-w64 pkg-config
+
+    - name: Set up cross-toolchain for 32-bit
+      run: |
+        sudo apt install -y mingw-w64-i686-dev
 
     - name: Build 32-bit DLL
       run: |
         meson setup --cross cross-mingw-32.txt b32
         ninja -C b32
+
+    - name: Set up cross-toolchain for 64-bit
+      run: |
+        sudo apt install -y mingw-w64-x86-64-dev
 
     - name: Build 64-bit DLL
       run: |
