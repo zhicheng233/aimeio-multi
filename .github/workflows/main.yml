@@ -18,10 +18,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip ninja-build mingw-w64
+          sudo apt-get install -y python3-pip ninja-build mingw-w64 pkg-config libssl-dev libssl-dev-mingw-w64
           pip3 install meson
 
-      # Step 3: Build for 32-bit
+      # Step 3: Build for 32-bit DLL
       - name: Build 32-bit DLL
         run: |
           meson setup --cross cross-mingw-32.txt b32
