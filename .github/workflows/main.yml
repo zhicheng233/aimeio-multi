@@ -17,7 +17,25 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 meson ninja-build
+        sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 meson ninja-build mingw-w64-tools
+        # 安装 MinGW OpenSSL 开发包
+        sudo apt-get install -y mingw-w64-i686-dev mingw-w64-x86-64-dev
+        
+    - name: Setup pkg-config for MinGW
+      run: |
+        # 创建 32-bit 的 pkg-config 包装器
+        echo '#!/bin/sh
+        export PKG_CONFIG_PATH=/usr/i686-w64-mingw32/lib/pkgconfig
+        pkg-config --define-prefix "$@"' > i686-w64-mingw32-pkg-config
+        chmod +x i686-w64-mingw32-pkg-config
+        sudo mv i686-w64-mingw32-pkg-config /usr/bin/
+        
+        # 创建 64-bit 的 pkg-config 包装器
+        echo '#!/bin/sh
+        export PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/lib/pkgconfig
+        pkg-config --define-prefix "$@"' > x86_64-w64-mingw32-pkg-config
+        chmod +x x86_64-w64-mingw32-pkg-config
+        sudo mv x86_64-w64-mingw32-pkg-config /usr/bin/
         
     - name: Setup cross compilation files
       run: |
@@ -27,6 +45,7 @@ jobs:
         ar = '"'"'i686-w64-mingw32-ar'"'"'
         strip = '"'"'i686-w64-mingw32-strip'"'"'
         windres = '"'"'i686-w64-mingw32-windres'"'"'
+        pkgconfig = '"'"'i686-w64-mingw32-pkg-config'"'"'
         [host_machine]
         system = '"'"'windows'"'"'
         cpu_family = '"'"'x86'"'"'
@@ -39,20 +58,40 @@ jobs:
         ar = '"'"'x86_64-w64-mingw32-ar'"'"'
         strip = '"'"'x86_64-w64-mingw32-strip'"'"'
         windres = '"'"'x86_64-w64-mingw32-windres'"'"'
+        pkgconfig = '"'"'x86_64-w64-mingw32-pkg-config'"'"'
         [host_machine]
         system = '"'"'windows'"'"'
         cpu_family = '"'"'x86_64'"'"'
         cpu = '"'"'x86_64'"'"'
         endian = '"'"'little'"'"'' > cross-mingw-64.txt
 
+    - name: Download and prepare OpenSSL
+      run: |
+        # 下载并编译 32-bit OpenSSL
+        wget https://www.openssl.org/source/openssl-3.0.12.tar.gz
+        tar xf openssl-3.0.12.tar.gz
+        cd openssl-3.0.12
+        ./Configure mingw --prefix=/usr/i686-w64-mingw32 --cross-compile-prefix=i686-w64-mingw32-
+        make
+        sudo make install
+        cd ..
+        
+        # 清理并编译 64-bit OpenSSL
+        rm -rf openssl-3.0.12
+        tar xf openssl-3.0.12.tar.gz
+        cd openssl-3.0.12
+        ./Configure mingw64 --prefix=/usr/x86_64-w64-mingw32 --cross-compile-prefix=x86_64-w64-mingw32-
+        make
+        sudo make install
+
     - name: Build 32-bit DLL
       run: |
-        meson setup --cross cross-mingw-32.txt b32
+        PKG_CONFIG_PATH=/usr/i686-w64-mingw32/lib/pkgconfig meson setup --cross cross-mingw-32.txt b32
         ninja -C b32
         
     - name: Build 64-bit DLL
       run: |
-        meson setup --cross cross-mingw-64.txt b64
+        PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/lib/pkgconfig meson setup --cross cross-mingw-64.txt b64
         ninja -C b64
 
     - name: Upload 32-bit artifacts
