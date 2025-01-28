@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # 在 Ubuntu 上运行工作流，因为你提到的是 Linux 环境的交叉编译
+    runs-on: ubuntu-latest  # 使用 Ubuntu 环境来执行交叉编译
 
     steps:
       - name: Checkout repository
@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y meson ninja-build mingw-w64
+          sudo apt install -y meson ninja-build mingw-w64 pkg-config libssl-dev
 
       - name: Set up cross compilation for mingw32
         run: meson setup --cross cross-mingw-32.txt b32
