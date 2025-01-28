@@ -1,0 +1,44 @@
+name: Build Windows DLLs
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          gcc-mingw-w64-i686 \
+          gcc-mingw-w64-x86-64 \
+          python3-pip
+        
+        pip install meson ninja
+
+    - name: Build 32-bit DLL
+      run: |
+        meson setup --cross cross-mingw-32.txt b32
+        ninja -C b32
+
+    - name: Build 64-bit DLL
+      run: |
+        meson setup --cross cross-mingw-64.txt b64
+        ninja -C b64
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: DLLs
+        path: |
+          b32/*.dll
+          b64/*.dll
+        if-no-files-found: error
