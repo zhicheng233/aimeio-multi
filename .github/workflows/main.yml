@@ -26,25 +26,27 @@ jobs:
 
     - name: Set up pkg-config for MinGW
       run: |
-        echo "prefix=/usr/i686-w64-mingw32" > /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "exec_prefix=\${prefix}" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "libdir=\${exec_prefix}/lib" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "includedir=\${prefix}/include" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Name: OpenSSL" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Description: Secure Sockets Layer and cryptography libraries" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Version: 1.1.1" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Libs: -L\${libdir} -lssl -lcrypto" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Cflags: -I\${includedir}" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        sudo mkdir -p /usr/i686-w64-mingw32/lib/pkgconfig
+        sudo mkdir -p /usr/x86_64-w64-mingw32/lib/pkgconfig
+        echo "prefix=/usr/i686-w64-mingw32" | sudo tee /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "exec_prefix=\${prefix}" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "libdir=\${exec_prefix}/lib" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "includedir=\${prefix}/include" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Name: OpenSSL" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Description: Secure Sockets Layer and cryptography libraries" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Version: 1.1.1" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Libs: -L\${libdir} -lssl -lcrypto" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Cflags: -I\${includedir}" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
 
-        echo "prefix=/usr/x86_64-w64-mingw32" > /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "exec_prefix=\${prefix}" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "libdir=\${exec_prefix}/lib" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "includedir=\${prefix}/include" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Name: OpenSSL" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Description: Secure Sockets Layer and cryptography libraries" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Version: 1.1.1" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Libs: -L\${libdir} -lssl -lcrypto" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
-        echo "Cflags: -I\${includedir}" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "prefix=/usr/x86_64-w64-mingw32" | sudo tee /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "exec_prefix=\${prefix}" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "libdir=\${exec_prefix}/lib" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "includedir=\${prefix}/include" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Name: OpenSSL" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Description: Secure Sockets Layer and cryptography libraries" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Version: 1.1.1" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Libs: -L\${libdir} -lssl -lcrypto" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Cflags: -I\${includedir}" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
 
     - name: Build for 32-bit
       env:
