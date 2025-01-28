@@ -1,4 +1,4 @@
-name: Build DLL
+name: Build DLLs
 
 on:
   push:
@@ -9,36 +9,34 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Python (for Meson)
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
+      # Step 2: Install dependencies
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build mingw-w64
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y mingw-w64 ninja-build libssl-dev libssl-dev:i386 gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
-        pip install meson
+      # Step 3: Build for 32-bit
+      - name: Build 32-bit DLL
+        run: |
+          meson setup --cross cross-mingw-32.txt b32
+          ninja -C b32
 
-    - name: Build 32-bit DLL
-      run: |
-        meson setup --cross-file cross-mingw-32.txt b32 -Dopenssl_include=/usr/include -Dopenssl_lib=/usr/lib
-        ninja -C b32
+      # Step 4: Build for 64-bit
+      - name: Build 64-bit DLL
+        run: |
+          meson setup --cross cross-mingw-64.txt b64
+          ninja -C b64
 
-    - name: Build 64-bit DLL
-      run: |
-        meson setup --cross-file cross-mingw-64.txt b64 -Dopenssl_include=/usr/include/x86_64-linux-gnu -Dopenssl_lib=/usr/lib/x86_64-linux-gnu
-        ninja -C b64
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: dll-builds
-        path: |
-          b32/*.dll
-          b64/*.dll
+      # Step 5: Upload artifacts
+      - name: Upload DLLs
+        uses: actions/upload-artifact@v3
+        with:
+          name: compiled-dlls
+          path: |
+            b32/*.dll
+            b64/*.dll
