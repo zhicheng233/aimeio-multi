@@ -22,17 +22,17 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y mingw-w64 ninja-build
+        sudo apt install -y mingw-w64 ninja-build libssl-dev libssl-dev:i386 gcc-mingw-w64-i686 gcc-mingw-w64-x86-64
         pip install meson
 
     - name: Build 32-bit DLL
       run: |
-        meson setup --cross-file cross-mingw-32.txt b32
+        meson setup --cross-file cross-mingw-32.txt b32 -Dopenssl_include=/usr/include -Dopenssl_lib=/usr/lib
         ninja -C b32
 
     - name: Build 64-bit DLL
       run: |
-        meson setup --cross-file cross-mingw-64.txt b64
+        meson setup --cross-file cross-mingw-64.txt b64 -Dopenssl_include=/usr/include/x86_64-linux-gnu -Dopenssl_lib=/usr/lib/x86_64-linux-gnu
         ninja -C b64
 
     - name: Upload build artifacts
