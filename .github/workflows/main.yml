@@ -16,23 +16,35 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up MinGW
+    - name: Set up MinGW and dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y mingw-w64
-
-    - name: Set up Meson and Ninja
-      run: |
         sudo apt-get install -y meson ninja-build pkg-config
-
-    - name: Install OpenSSL for MinGW
-      run: |
         sudo apt-get install -y mingw-w64-i686-dev mingw-w64-x86-64-dev
+        sudo apt-get install -y libssl-dev
 
     - name: Set up pkg-config for MinGW
       run: |
-        sudo ln -sf /usr/bin/pkg-config /usr/bin/i686-w64-mingw32-pkg-config
-        sudo ln -sf /usr/bin/pkg-config /usr/bin/x86_64-w64-mingw32-pkg-config
+        echo "prefix=/usr/i686-w64-mingw32" > /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "exec_prefix=\${prefix}" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "libdir=\${exec_prefix}/lib" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "includedir=\${prefix}/include" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Name: OpenSSL" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Description: Secure Sockets Layer and cryptography libraries" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Version: 1.1.1" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Libs: -L\${libdir} -lssl -lcrypto" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Cflags: -I\${includedir}" >> /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+
+        echo "prefix=/usr/x86_64-w64-mingw32" > /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "exec_prefix=\${prefix}" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "libdir=\${exec_prefix}/lib" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "includedir=\${prefix}/include" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Name: OpenSSL" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Description: Secure Sockets Layer and cryptography libraries" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Version: 1.1.1" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Libs: -L\${libdir} -lssl -lcrypto" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Cflags: -I\${includedir}" >> /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
 
     - name: Build for 32-bit
       env:
