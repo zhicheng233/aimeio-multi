@@ -1,4 +1,4 @@
-name: Build DLLs
+name: Build DLL
 
 on:
   push:
@@ -9,51 +9,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      # Step 1: Checkout the code
-      - name: Checkout code
-        uses: actions/checkout@v3
+    # 检出代码
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      # Step 2: Install dependencies
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-pip ninja-build mingw-w64 pkg-config wget make
-          pip3 install meson
+    # 安装构建工具
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build meson mingw-w64
 
-      # Step 3: Build OpenSSL for 32-bit
-      - name: Build OpenSSL 32-bit
-        run: |
-          wget https://www.openssl.org/source/openssl-1.1.1v.tar.gz
-          tar -xzf openssl-1.1.1v.tar.gz
-          cd openssl-1.1.1v
-          ./Configure mingw --prefix=/usr/i686-w64-mingw32
-          make && sudo make install
+    # 配置和编译
+    - name: Configure and build (64-bit)
+      run: |
+        meson setup --cross-file cross-mingw-64.txt build
+        ninja -C build
 
-      # Step 4: Build OpenSSL for 64-bit
-      - name: Build OpenSSL 64-bit
-        run: |
-          cd openssl-1.1.1v
-          ./Configure mingw64 --prefix=/usr/x86_64-w64-mingw32
-          make && sudo make install
-
-      # Step 5: Build for 32-bit DLL
-      - name: Build 32-bit DLL
-        run: |
-          meson setup --cross cross-mingw-32.txt b32
-          ninja -C b32
-
-      # Step 6: Build for 64-bit DLL
-      - name: Build 64-bit DLL
-        run: |
-          meson setup --cross cross-mingw-64.txt b64
-          ninja -C b64
-
-      # Step 7: Upload artifacts
-      - name: Upload DLLs
-        uses: actions/upload-artifact@v3
-        with:
-          name: compiled-dlls
-          path: |
-            b32/*.dll
-            b64/*.dll
+    # 上传生成的 DLL 文件作为构建产物
+    - name: Upload DLL
+      uses: actions/upload-artifact@v3
+      with:
+        name: compiled-dll
+        path: build/
