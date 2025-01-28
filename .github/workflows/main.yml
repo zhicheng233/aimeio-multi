@@ -1,35 +1,46 @@
-name: Build DLL
+name: Build DLL on Windows
 
 on:
   push:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 在 Ubuntu 上运行工作流，因为你提到的是 Linux 环境的交叉编译
 
     steps:
-    # 检出代码
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    # 安装构建工具和依赖
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ninja-build meson mingw-w64 pkg-config libssl-dev
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y meson ninja-build mingw-w64
 
-    # 配置和编译
-    - name: Configure and build (64-bit)
-      run: |
-        meson setup --cross-file cross-mingw-64.txt build
-        ninja -C build
+      - name: Set up cross compilation for mingw32
+        run: meson setup --cross cross-mingw-32.txt b32
 
-    # 上传生成的 DLL 文件作为构建产物
-    - name: Upload DLL
-      uses: actions/upload-artifact@v3
-      with:
-        name: compiled-dll
-        path: build/
+      - name: Build with ninja for mingw32
+        run: ninja -C b32
+
+      - name: Set up cross compilation for mingw64
+        run: meson setup --cross cross-mingw-64.txt b64
+
+      - name: Build with ninja for mingw64
+        run: ninja -C b64
+
+      - name: Collect the DLL files
+        run: |
+          mkdir output
+          cp b32/*.dll output/  # 复制 mingw32 编译的 DLL 文件
+          cp b64/*.dll output/  # 复制 mingw64 编译的 DLL 文件
+
+      - name: Upload DLL artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dll-artifacts
+          path: output/
