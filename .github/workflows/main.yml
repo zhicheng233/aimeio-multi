@@ -2,67 +2,72 @@ name: Build DLL
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install dependencies
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up MinGW and dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 meson ninja-build
-        
-    - name: Setup cross compilation files
-      run: |
-        echo '[binaries]
-        c = '"'"'i686-w64-mingw32-gcc'"'"'
-        cpp = '"'"'i686-w64-mingw32-g++'"'"'
-        ar = '"'"'i686-w64-mingw32-ar'"'"'
-        strip = '"'"'i686-w64-mingw32-strip'"'"'
-        windres = '"'"'i686-w64-mingw32-windres'"'"'
-        [host_machine]
-        system = '"'"'windows'"'"'
-        cpu_family = '"'"'x86'"'"'
-        cpu = '"'"'i686'"'"'
-        endian = '"'"'little'"'"'' > cross-mingw-32.txt
-        
-        echo '[binaries]
-        c = '"'"'x86_64-w64-mingw32-gcc'"'"'
-        cpp = '"'"'x86_64-w64-mingw32-g++'"'"'
-        ar = '"'"'x86_64-w64-mingw32-ar'"'"'
-        strip = '"'"'x86_64-w64-mingw32-strip'"'"'
-        windres = '"'"'x86_64-w64-mingw32-windres'"'"'
-        [host_machine]
-        system = '"'"'windows'"'"'
-        cpu_family = '"'"'x86_64'"'"'
-        cpu = '"'"'x86_64'"'"'
-        endian = '"'"'little'"'"'' > cross-mingw-64.txt
+        sudo apt-get install -y mingw-w64
+        sudo apt-get install -y meson ninja-build pkg-config
+        sudo apt-get install -y mingw-w64-i686-dev mingw-w64-x86-64-dev
+        sudo apt-get install -y libssl-dev
 
-    - name: Build 32-bit DLL
+    - name: Set up pkg-config for MinGW
+      run: |
+        sudo mkdir -p /usr/i686-w64-mingw32/lib/pkgconfig
+        sudo mkdir -p /usr/x86_64-w64-mingw32/lib/pkgconfig
+        echo "prefix=/usr/i686-w64-mingw32" | sudo tee /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "exec_prefix=\${prefix}" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "libdir=\${exec_prefix}/lib" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "includedir=\${prefix}/include" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Name: OpenSSL" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Description: Secure Sockets Layer and cryptography libraries" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Version: 1.1.1" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Libs: -L\${libdir} -lssl -lcrypto" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Cflags: -I\${includedir}" | sudo tee -a /usr/i686-w64-mingw32/lib/pkgconfig/openssl.pc
+
+        echo "prefix=/usr/x86_64-w64-mingw32" | sudo tee /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "exec_prefix=\${prefix}" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "libdir=\${exec_prefix}/lib" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "includedir=\${prefix}/include" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Name: OpenSSL" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Description: Secure Sockets Layer and cryptography libraries" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Version: 1.1.1" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Libs: -L\${libdir} -lssl -lcrypto" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+        echo "Cflags: -I\${includedir}" | sudo tee -a /usr/x86_64-w64-mingw32/lib/pkgconfig/openssl.pc
+
+    - name: Build for 32-bit
+      env:
+        PKG_CONFIG: i686-w64-mingw32-pkg-config
+        PKG_CONFIG_PATH: /usr/i686-w64-mingw32/lib/pkgconfig
       run: |
         meson setup --cross cross-mingw-32.txt b32
         ninja -C b32
-        
-    - name: Build 64-bit DLL
+
+    - name: Build for 64-bit
+      env:
+        PKG_CONFIG: x86_64-w64-mingw32-pkg-config
+        PKG_CONFIG_PATH: /usr/x86_64-w64-mingw32/lib/pkgconfig
       run: |
         meson setup --cross cross-mingw-64.txt b64
         ninja -C b64
 
-    - name: Upload 32-bit artifacts
+    - name: Upload DLL artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: aimeio-32bit
-        path: b32/*.dll
-        
-    - name: Upload 64-bit artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: aimeio-64bit
-        path: b64/*.dll
+        name: dll-artifacts
+        path: |
+          b32/*.dll
+          b64/*.dll
