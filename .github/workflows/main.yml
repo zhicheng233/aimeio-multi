@@ -97,19 +97,36 @@ jobs:
     - name: Build 64-bit DLL
       run: |
         PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/lib/pkgconfig LIBRARY_PATH=/usr/x86_64-w64-mingw32/lib meson setup --cross cross-mingw-64.txt b64
-        # 显示库文件位置以便调试
-        ls -la /usr/x86_64-w64-mingw32/lib/libssl*
-        ls -la /usr/x86_64-w64-mingw32/lib/libcrypto*
         ninja -C b64
+
+    - name: List build directories
+      run: |
+        echo "32-bit build directory contents:"
+        find b32 -type f -name "*.dll"
+        echo "64-bit build directory contents:"
+        find b64 -type f -name "*.dll"
 
     - name: Upload 32-bit artifacts
       uses: actions/upload-artifact@v3
       with:
         name: aimeio-32bit
-        path: b32/*.dll
+        path: b32/aimeio/aimeio.dll
         
     - name: Upload 64-bit artifacts
       uses: actions/upload-artifact@v3
       with:
         name: aimeio-64bit
-        path: b64/*.dll
+        path: b64/aimeio/aimeio.dll
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          b32/aimeio/aimeio.dll
+          b64/aimeio/aimeio.dll
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
