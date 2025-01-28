@@ -19,7 +19,7 @@ jobs:
     - name: Set up Meson and Ninja
       run: |
         sudo apt update
-        sudo apt install -y meson ninja-build
+        sudo apt install -y meson ninja-build pkg-config libssl-dev
 
     - name: Set up MinGW
       run: |
