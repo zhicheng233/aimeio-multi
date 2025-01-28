@@ -18,7 +18,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 meson ninja-build mingw-w64-tools
-        # 安装 MinGW OpenSSL 开发包
         sudo apt-get install -y mingw-w64-i686-dev mingw-w64-x86-64-dev
         
     - name: Setup pkg-config for MinGW
@@ -45,7 +44,7 @@ jobs:
         ar = '"'"'i686-w64-mingw32-ar'"'"'
         strip = '"'"'i686-w64-mingw32-strip'"'"'
         windres = '"'"'i686-w64-mingw32-windres'"'"'
-        pkgconfig = '"'"'i686-w64-mingw32-pkg-config'"'"'
+        pkg-config = '"'"'i686-w64-mingw32-pkg-config'"'"'
         [host_machine]
         system = '"'"'windows'"'"'
         cpu_family = '"'"'x86'"'"'
@@ -58,7 +57,7 @@ jobs:
         ar = '"'"'x86_64-w64-mingw32-ar'"'"'
         strip = '"'"'x86_64-w64-mingw32-strip'"'"'
         windres = '"'"'x86_64-w64-mingw32-windres'"'"'
-        pkgconfig = '"'"'x86_64-w64-mingw32-pkg-config'"'"'
+        pkg-config = '"'"'x86_64-w64-mingw32-pkg-config'"'"'
         [host_machine]
         system = '"'"'windows'"'"'
         cpu_family = '"'"'x86_64'"'"'
@@ -67,12 +66,13 @@ jobs:
 
     - name: Download and prepare OpenSSL
       run: |
-        # 下载并编译 32-bit OpenSSL
         wget https://www.openssl.org/source/openssl-3.0.12.tar.gz
         tar xf openssl-3.0.12.tar.gz
+        
+        # 编译 32-bit OpenSSL
         cd openssl-3.0.12
-        ./Configure mingw --prefix=/usr/i686-w64-mingw32 --cross-compile-prefix=i686-w64-mingw32-
-        make
+        ./Configure mingw --prefix=/usr/i686-w64-mingw32 --cross-compile-prefix=i686-w64-mingw32- --libdir=lib
+        make -j$(nproc)
         sudo make install
         cd ..
         
@@ -80,18 +80,26 @@ jobs:
         rm -rf openssl-3.0.12
         tar xf openssl-3.0.12.tar.gz
         cd openssl-3.0.12
-        ./Configure mingw64 --prefix=/usr/x86_64-w64-mingw32 --cross-compile-prefix=x86_64-w64-mingw32-
-        make
+        ./Configure mingw64 --prefix=/usr/x86_64-w64-mingw32 --cross-compile-prefix=x86_64-w64-mingw32- --libdir=lib
+        make -j$(nproc)
         sudo make install
+        cd ..
+        
+        # 创建符号链接确保库文件在正确位置
+        sudo ln -sf /usr/x86_64-w64-mingw32/lib/libssl.dll.a /usr/x86_64-w64-mingw32/lib/libssl.a
+        sudo ln -sf /usr/x86_64-w64-mingw32/lib/libcrypto.dll.a /usr/x86_64-w64-mingw32/lib/libcrypto.a
 
     - name: Build 32-bit DLL
       run: |
-        PKG_CONFIG_PATH=/usr/i686-w64-mingw32/lib/pkgconfig meson setup --cross cross-mingw-32.txt b32
+        PKG_CONFIG_PATH=/usr/i686-w64-mingw32/lib/pkgconfig LIBRARY_PATH=/usr/i686-w64-mingw32/lib meson setup --cross cross-mingw-32.txt b32
         ninja -C b32
         
     - name: Build 64-bit DLL
       run: |
-        PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/lib/pkgconfig meson setup --cross cross-mingw-64.txt b64
+        PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/lib/pkgconfig LIBRARY_PATH=/usr/x86_64-w64-mingw32/lib meson setup --cross cross-mingw-64.txt b64
+        # 显示库文件位置以便调试
+        ls -la /usr/x86_64-w64-mingw32/lib/libssl*
+        ls -la /usr/x86_64-w64-mingw32/lib/libcrypto*
         ninja -C b64
 
     - name: Upload 32-bit artifacts
