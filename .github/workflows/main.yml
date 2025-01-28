@@ -11,38 +11,34 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Set up MinGW
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mingw-w64
+
     - name: Set up Meson and Ninja
       run: |
-        sudo apt update
-        sudo apt install -y meson ninja-build pkg-config libssl-dev mingw-w64
+        sudo apt-get install -y meson ninja-build
 
-    - name: Set environment variables for cross-compiling
-      run: |
-        # Set PKG_CONFIG_PATH to point to MinGW pkg-config files
-        export PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/lib/pkgconfig:/usr/i686-w64-mingw32/lib/pkgconfig
-        export PKG_CONFIG=/usr/bin/pkg-config
-        echo "PKG_CONFIG=$PKG_CONFIG"
-        echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-
-    - name: Build 32-bit DLL
+    - name: Build for 32-bit
       run: |
         meson setup --cross cross-mingw-32.txt b32
         ninja -C b32
 
-    - name: Build 64-bit DLL
+    - name: Build for 64-bit
       run: |
         meson setup --cross cross-mingw-64.txt b64
         ninja -C b64
 
     - name: Upload DLL artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
-        name: dlls
+        name: dll-artifacts
         path: |
           b32/*.dll
           b64/*.dll
