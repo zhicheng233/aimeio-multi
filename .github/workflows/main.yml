@@ -36,7 +36,7 @@ jobs:
         ninja -C b64
 
     - name: Upload DLL artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dll-artifacts
         path: |
