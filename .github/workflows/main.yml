@@ -23,7 +23,7 @@ jobs:
 
     - name: Set up MinGW and cross-compiling tools
       run: |
-        sudo apt install -y mingw-w64 mingw-w64-i686-dev mingw-w64-x86-64-dev pkg-config
+        sudo apt install -y mingw-w64 mingw-w64-i686-dev mingw-w64-x86-64-dev pkg-config mingw-w64-x86_64-pkg-config
 
     - name: Set environment variables for cross-compiling
       run: |
@@ -31,7 +31,7 @@ jobs:
         export PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/lib/pkgconfig:/usr/i686-w64-mingw32/lib/pkgconfig
         echo "PKG_CONFIG=$PKG_CONFIG"
         echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-      
+
     - name: Build 32-bit DLL
       run: |
         meson setup --cross cross-mingw-32.txt b32
