@@ -45,6 +45,7 @@ struct aimeio_multi_ctx
     SOCKET websocket_client;
     enum WebSocketConnectionStatus connection_status;
     char last_received_card_id[AIME_ID_SIZE * 2 + 1]; // Hex string representation
+    uint8_t cardIdm;
 };
 
 static struct aimeio_multi_ctx ctx = {
@@ -302,8 +303,37 @@ DWORD WINAPI WebSocketThread(LPVOID lpParam) {
                 update_connection_status(WS_DISCONNECTED);
                 break;
             } else if (payload_len > 0) {
+                //打印数据包数据
+                //Received payload: {"id": 1, "module": "card", "function": "insert", "params": [0, "012XXXXXXXXXXX"]}
                 printf("Received payload: %s\n", payload);
-
+                cJSON *json = cJSON_Parse(payload);
+                if (json == NULL) {
+                    printf("解析数据包JSON数据失败\n");
+                    return;
+                }
+            
+                // 获取params数组
+                cJSON *params = cJSON_GetObjectItem(json, "params");
+                if (!cJSON_IsArray(params)) {
+                    printf("params不是一个数组\n");
+                    cJSON_Delete(json);
+                    return;
+                }
+            
+                // 获取params数组中的第二个元素
+                cJSON *param = cJSON_GetArrayItem(params, 1);
+                if (!cJSON_IsString(param)) {
+                    printf("params数组中的第二个元素不是字符串\n");
+                    cJSON_Delete(json);
+                    return;
+                }
+            
+                // 打印获取到的字符串
+                printf("卡号: %s\n", param->valuestring);
+                cardIdm = swscanf(param->valuestring + 2 * j, L"%02x", &byte);
+                // 释放cJSON对象
+                cJSON_Delete(json);
+                
                 // Validate and process card ID
                 if (payload_len == AIME_ID_SIZE * 2) {
                     // Convert hex string to bytes
@@ -448,7 +478,7 @@ HRESULT aime_io_nfc_get_aime_id(
         return S_FALSE;
     }
 
-    memcpy(luid, ctx.aime_ids[ctx.current_aime], luid_size);
+    memcpy(luid, cardIdm, luid_size);
 
     // Reset current_aime after reading
     ctx.current_aime = -1;
