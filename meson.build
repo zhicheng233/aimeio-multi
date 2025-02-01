@@ -38,6 +38,23 @@ if cc.get_id() != 'msvc'
     )
 endif
 
+# 找到并包含 cJSON 库
+cjson_dep = dependency('cjson', required: true)
+
 inc = include_directories('.')
 
+# 添加 aimeio 子目录
 subdir('aimeio')
+
+# 编译 aimeio 目录下的文件并链接 cJSON 库
+aimeio_sources = files(
+    'aimeio/aimeio.c',
+    # 添加其他源文件
+)
+
+executable(
+    'aimeio',
+    aimeio_sources,
+    include_directories: inc,
+    dependencies: cjson_dep,
+)
