@@ -12,6 +12,7 @@
 #include <openssl/sha.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <cJSON.h>
 
 #define AIME_ID_SIZE 10
 #define MAX_AIME_CARDS 16
