@@ -107,13 +107,13 @@ jobs:
         find b64 -type f -name "*.dll"
 
     - name: Upload 32-bit artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: aimeio-32bit
         path: b32/aimeio/aimeio.dll
         
     - name: Upload 64-bit artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: aimeio-64bit
         path: b64/aimeio/aimeio.dll
